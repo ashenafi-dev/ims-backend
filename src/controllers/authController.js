@@ -1,39 +1,72 @@
+const { v4: uuidv4 } = require("uuid");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const User = require("../models/userModel");
-const JWT_SECRET =
-  "2c5e4503b73296538aade352b8130db1550fa9be63937069d272236daa4f743fd6717a280654a464e3f8dd0f01b4b27fb5e8e16fb0c02474b5e7e92a8894eada";
-const login = (req, res) => {
+const db = require("../config/db");
+const User = require("../models/userModel"); // Adjust path as needed
+require("dotenv").config();
+
+const login = async (req, res) => {
   const { username, password } = req.body;
 
   User.findByUsername(username, async (err, user) => {
     if (err) return res.status(500).send("Error logging in");
     if (!user) return res.status(404).send("User not found");
 
-    console.log("User-provided password:", password);
-    console.log("Stored hashed password:", user.password);
-    console.log("user-stored username:", user.username);
-    console.log("user-stored role:", user.role);
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).send("Invalid credentials");
 
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "5s" }
+    );
+
+    const refreshToken = uuidv4();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30); // Set expiration date for 30 days
+
+    // Store refresh token in the database
     try {
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) return res.status(401).send("Invalid credentials");
-      console.log(isMatch);
-
-      const token = jwt.sign(
-        { id: user.id, username: user.username, role: user.role },
-        JWT_SECRET,
-        {
-          expiresIn: "1h",
-        }
-      );
-      console.log(token);
-      res.json({ token });
-    } catch (error) {
-      console.error("Error comparing passwords:", error);
-      res.status(500).send("Error logging in");
+      await db
+        .promise()
+        .query(
+          "INSERT INTO RefreshTokens (token, userId, expiresAt) VALUES (?, ?, ?)",
+          [refreshToken, user.id, expiresAt]
+        );
+    } catch (err) {
+      console.error("Error storing refresh token:", err);
+      return res.status(500).send("Error storing refresh token");
     }
+
+    res.json({ token, refreshToken });
   });
 };
 
-module.exports = { login };
+const refreshToken = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  try {
+    const [rows] = await db
+      .promise()
+      .query("SELECT * FROM RefreshTokens WHERE token = ?", [refreshToken]);
+    const tokenEntry = rows[0];
+
+    if (!tokenEntry || new Date() > new Date(tokenEntry.expiresAt)) {
+      return res.status(403).send("Refresh token invalid or expired");
+    }
+
+    const userId = tokenEntry.userId;
+    const newToken = jwt.sign(
+      { id: userId, role: "user" },
+      process.env.JWT_SECRET,
+      { expiresIn: "5s" }
+    );
+
+    res.json({ token: newToken });
+  } catch (err) {
+    console.error("Error refreshing token:", err);
+    res.status(500).send("Error refreshing token");
+  }
+};
+
+module.exports = { login, refreshToken };
