@@ -1,12 +1,12 @@
 const bcrypt = require("bcryptjs");
-const db = require("./db"); // Adjust the path as needed
+const db = require("../config/db"); // Adjust the path as needed
 
 (async () => {
   try {
     // Query to get all users
     const [users] = await db
       .promise()
-      .query("SELECT id, username, password FROM my_users");
+      .query("SELECT user_id, username, password FROM Users");
 
     for (const user of users) {
       if (!user.password.startsWith("$2a$")) {
@@ -16,9 +16,9 @@ const db = require("./db"); // Adjust the path as needed
         // Update the password in the database
         await db
           .promise()
-          .query("UPDATE my_users SET password = ? WHERE id = ?", [
+          .query("UPDATE Users SET password = ? WHERE user_id = ?", [
             hashedPassword,
-            user.id,
+            user.user_id,
           ]);
       }
     }
