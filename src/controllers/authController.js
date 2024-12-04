@@ -19,7 +19,7 @@ const login = async (req, res) => {
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "5s" }
+      { expiresIn: "1h" }
     );
 
     const refreshToken = uuidv4();
@@ -60,7 +60,7 @@ const refreshToken = async (req, res) => {
     const newToken = jwt.sign(
       { id: userId, role: "user" },
       process.env.JWT_SECRET,
-      { expiresIn: "5s" }
+      { expiresIn: "30d" }
     );
 
     res.json({ token: newToken });

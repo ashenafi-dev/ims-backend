@@ -6,18 +6,11 @@ const app = express();
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Middleware to parse JSON bodies
 
-// Test route to check database connection
-app.get("/test-db", (req, res) => {
-  db.query("SELECT 1 + 1 AS solution", (err, results) => {
-    if (err) {
-      return res.status(500).send("Error executing query");
-    }
-    res.send(`Database connection successful: ${results[0].solution}`);
-  });
-});
+// Use authentication routes
+app.use("/auth", authRoutes);
 
-// Create a new product
-app.post("/products", (req, res) => {
+// CRUD on Item Table
+const handleCreateItem = (req, res) => {
   const { name, description, price, quantity } = req.body;
   const query =
     "INSERT INTO products (name, description, price, quantity) VALUES (?, ?, ?, ?)";
@@ -27,14 +20,30 @@ app.post("/products", (req, res) => {
     }
     res.status(201).send(`Product created with ID: ${results.insertId}`);
   });
-});
+};
 
-// Handle GET request for /products
-app.get("/products", (req, res) => {
-  res.send("This is the products route.");
-});
+// const handleRetriveItem = () => {
+//   return 0;
+// };
 
-// Use authentication routes
-app.use("/auth", authRoutes);
+// const handleUpdateItem = () => {
+//   return 0;
+// };
+
+// const handleDeleteItem = () => {
+//   return 0;
+// };
+
+// create Item
+app.post("/createItem", handleCreateItem);
+
+// retrive Item
+// app.get("/retriveItem", handleRetriveItem);
+
+// // update item
+// app.put("/updateItem", handleUpdateItem);
+
+// // delete item
+// app.delete("/deleteItem", handleDeleteItem);
 
 module.exports = app;
