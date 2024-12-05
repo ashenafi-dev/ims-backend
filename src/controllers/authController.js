@@ -30,7 +30,7 @@ const login = async (req, res) => {
     console.log("Password match successful for username:", username);
 
     const token = jwt.sign(
-      { id: user.user_id, username: user.username, role: user.role_name },
+      { userId: user.user_id, username: user.username, role: user.role_name },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
