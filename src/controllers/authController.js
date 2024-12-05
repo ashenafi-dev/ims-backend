@@ -19,18 +19,23 @@ const login = async (req, res) => {
       return res.status(404).send("User not found");
     }
 
-    console.log("User found:", user);
-
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       console.warn("Invalid credentials for username:", username);
       return res.status(401).send("Invalid credentials");
     }
 
+    console.log(`user password: ${password}`);
+    console.log(`stored password: ${user.password}`);
     console.log("Password match successful for username:", username);
 
     const token = jwt.sign(
-      { userId: user.user_id, username: user.username, role: user.role_name },
+      {
+        userId: user.user_id,
+        username: user.username,
+        role: user.role_name,
+        department_id: user.department_id,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
