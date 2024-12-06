@@ -100,9 +100,42 @@ const updateUser = async (req, res) => {
   }
 };
 
+// New Route: Get All Users with All Attributes
+const handleGetAllUsers = (req, res) => {
+  const query = `
+    SELECT 
+      Users.user_id,
+      Users.username,
+      Users.email,
+      Users.phone,
+      Users.profile_image,
+      Users.created_at,
+      Users.updated_at,
+      Users.department_id,
+      Departments.department_name,
+      Users.first_name,
+      Users.last_name,
+      Users.is_deleted,
+      GROUP_CONCAT(Roles.role_name SEPARATOR ', ') AS roles
+    FROM Users
+    LEFT JOIN Departments ON Users.department_id = Departments.department_id
+    LEFT JOIN UserRoles ON Users.user_id = UserRoles.user_id
+    LEFT JOIN Roles ON UserRoles.role_id = Roles.role_id
+    GROUP BY Users.user_id
+  `;
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching all users:", err);
+      return res.status(500).send("Error fetching all users");
+    }
+    res.status(200).json(results);
+  });
+};
+
 // Routes
 router.get("/:user_id", handleGetUserAccountById);
 router.get("/department/:department_id/users", handleGetUsersByDepartment);
 router.put("/:userId", updateUser);
+router.get("/", handleGetAllUsers); // New Route
 
 module.exports = router;
