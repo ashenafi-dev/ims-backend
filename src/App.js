@@ -9,6 +9,7 @@ const requestRoutes = require("./routes/requestRoutes");
 const transferRoutes = require("./routes/transferRoutes");
 const userRoutes = require("./routes/userRoutes");
 const { Module } = require("module");
+const db = require("./config/db"); // Adjust the path as needed
 
 const app = express();
 app.use(cors());
@@ -68,6 +69,19 @@ app.get("/api/backups/:fileName", (req, res) => {
   const fileName = req.params.fileName;
   const filePath = path.join(BACKUP_DIR, "/manual", fileName);
   res.download(filePath);
+});
+
+// Route to get all audit logs without using promises
+app.get("/api/auditlogs", (req, res) => {
+  db.query("SELECT * FROM AuditLogs", (error, results) => {
+    if (error) {
+      console.error("Error fetching audit logs:", error);
+      return res
+        .status(500)
+        .json({ message: "Failed to fetch audit logs", error: error.message });
+    }
+    res.json({ auditlogs: results });
+  });
 });
 
 module.exports = app;
