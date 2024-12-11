@@ -19,6 +19,7 @@ const backupSettings = {
   retention: 30, // Retention period in days
 };
 
+//
 // Schedule automatic backups
 scheduleBackup(backupSettings);
 
