@@ -18,7 +18,7 @@ const handleCreateItem = (req, res) => {
     manufacturer,
     model_number,
   } = req.body;
-
+  //
   const query =
     "INSERT INTO Items (name, description, category, price, stock_level, eligibility_tag, expiration_date, media_url, measurement_unit, manufacturer, model_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
