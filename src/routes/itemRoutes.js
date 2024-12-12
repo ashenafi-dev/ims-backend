@@ -164,8 +164,8 @@ router.put("/items/:id", (req, res) => {
   const { name, description, category, price, stock_level, expiration_date } =
     req.body;
   db.query(
-    "UPDATE Items SET name = ?, description = ?, category = ?, price = ?, stock_level = ?, expiration_date = ? WHERE item_id = ?",
-    [name, description, category, price, stock_level, expiration_date, itemId],
+    "UPDATE Items SET name = ?, description = ?, category = ?, price = ?, stock_level = ? WHERE item_id = ?",
+    [name, description, category, price, stock_level, itemId],
     (err, result) => {
       if (err) {
         console.error("Error updating item:", err);
@@ -191,6 +191,26 @@ router.delete("/items/:id", (req, res) => {
     }
     res.json({ message: "Item deleted successfully" });
   });
+});
+
+// DELETE endpoint to remove an item from the useritems table
+router.delete("/:itemId", (req, res) => {
+  const itemId = req.params.itemId;
+
+  db.query(
+    "DELETE FROM UserItems WHERE user_item_id = ?",
+    [itemId],
+    (err, result) => {
+      if (err) {
+        console.error("Error removing item:", err);
+        return res.status(500).json({ message: "Internal server error" });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      res.json({ message: "Item removed successfully" });
+    }
+  );
 });
 
 module.exports = router;
